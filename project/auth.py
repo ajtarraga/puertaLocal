@@ -18,10 +18,16 @@ def signup_post():
     name = request.form.get('name')
     password = request.form.get('password')
 
-    user = User.query.filter_by(email=email).first() # if this returns a user, then the email already exists in database
+    emailUser = User.query.filter_by(email=email).first() # if this returns a user, then the email already exists in database
 
-    if user: # if a user is found, we want to redirect back to signup page so user can try again
+    if emailUser: # if a user is found, we want to redirect back to signup page so user can try again
         flash('Email address already exists')
+        return redirect(url_for('auth.signup'))
+
+    nameUser = User.query.filter_by(name=name).first() # if this returns a user, then the name already exists in database
+
+    if nameUser: # if a user is found, we want to redirect back to signup page so user can try again
+        flash('Username already exists')
         return redirect(url_for('auth.signup'))
 
     # create a new user with the form data. Hash the password so the plaintext version isn't saved.
@@ -40,11 +46,11 @@ def login():
 @auth.route('/login', methods=['POST'])
 def login_post():
     # login code goes here
-    email = request.form.get('email')
+    name = request.form.get('name')
     password = request.form.get('password')
     remember = True if request.form.get('remember') else False
 
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(name=name).first()
 
     # check if the user actually exists
     # take the user-supplied password, hash it, and compare it to the hashed password in the database
