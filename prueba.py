@@ -1,89 +1,44 @@
 import time
-import network
-import socket
+import socketserver
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
 
-ledState = 'LED State Unknown'
+from gpiozero import LED, Button
 
-ssid = 'vodafoneDA38'
-password = 'ZGNWQGN5CDZWMZ'
+led = LED(15)
+button = Button(16)
 
-wlan = network.WLAN(network.STA_IF)
-wlan.active(True)
-wlan.connect(ssid, password)
+class RequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
 
-html = """<!DOCTYPE html>
-<html>
-<head> <title>Pico W</title> </head>
-<body> <h1>Pico W HTTP Server</h1>
-<p>Hello, World!</p>
-<p>%s</p>
-</body>
-</html>
-"""
+        led_state = "LED is OFF" if led.value == 0 else "LED is ON"
+        button_state = "Button is NOT pressed" if button.is_active else "Button is pressed"
 
-# Wait for connect or fail
-max_wait = 10
-while max_wait > 0:
-    if wlan.status() < 0 or wlan.status() >= 3:
-        break
-    max_wait -= 1
-    print('waiting for connection...')
-    time.sleep(1)
-    
-# Handle connection error
-if wlan.status() != 3:
-    raise RuntimeError('network connection failed')
-else:
-    print('Connected')
-    status = wlan.ifconfig()
-    print( 'ip = ' + status[0] )
-    
-    
-# Open socket
-addr = socket.getaddrinfo('0.0.0.0', 80)[0][-1]
-s = socket.socket()
-s.bind(addr)
-s.listen(1)
-print('listening on', addr)
+        html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Pico W</title>
+        </head>
+        <body>
+            <h1>Pico W HTTP Server</h1>
+            <p>Hello, World!</p>
+            <p>{}</p>
+            <p>{}</p>
+        </body>
+        </html>
+        """.format(led_state, button_state)
 
-# Listen for connections, serve client
-while True:
-    try:       
-        cl, addr = s.accept()
-        print('client connected from', addr)
-        request = cl.recv(1024)
-        print("request:")
-        print(request)
-        request = str(request)
-        led_on = request.find('led=on')
-        led_off = request.find('led=off')
-        
-        print( 'led on = ' + str(led_on))
-        print( 'led off = ' + str(led_off))
-        
-        if led_on == 8:
-            print("led on")
-            led.value(1)
-        if led_off == 8:
-            print("led off")
-            led.value(0)
-        
-        ledState = "LED is OFF" if led.value() == 0 else "LED is ON" # a compact if-else statement
-        
-        if button.value() == 1: # button not pressed
-            print("button NOT pressed")
-            buttonState = "Button is NOT pressed"
-        else:
-            print("button pressed")
-            buttonState = "Button is pressed"
-        
-        # Create and send response
-        stateis = ledState + " and " + buttonState
-        response = html % stateis
-        cl.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
-        cl.send(response)
-        cl.close()
-        
-    except OSError as e:
-        cl.close()
-        print('connection closed')
+        self.wfile.write(html.encode())
+
+def run(server_class=HTTPServer, handler_class=RequestHandler, port=80):
+    server_address = ('', port)
+    httpd = server_class(server_address, handler_class)
+    print('Starting httpd...')
+    httpd.serve_forever()
+
+if __name__ == '__main__':
+    run()
