@@ -35,7 +35,3 @@ def create_app():
         return User.query.get(int(user_id))
 
     return app
-
-if __name__ == "__main__":
-    app = create_app()
-    app.run(host=ip_address, port=80) # Change ip_address to the IP address of your Raspberry Pi
