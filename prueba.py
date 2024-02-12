@@ -1,12 +1,8 @@
 import time
 import network
 import socket
-from machine import Pin
 
-led = Pin(15, Pin.OUT)
 ledState = 'LED State Unknown'
-
-button = Pin(16, Pin.IN, Pin.PULL_UP)
 
 ssid = 'vodafoneDA38'
 password = 'ZGNWQGN5CDZWMZ'
