@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-import socket
 
 # init SQLAlchemy so we can use it later in our models
 db = SQLAlchemy()
@@ -37,19 +36,6 @@ def create_app():
 
     return app
 
-def get_ip_address():
-    try:
-        import socket
-        h_name = socket.gethostname()
-        IP_addres = socket.gethostbyname(h_name)
-        print("Host Name is:" + h_name)
-        print("Computer IP Address is:" + IP_addres)
-        return IP_addres
-    except socket.error:
-        return None
-
 if __name__ == "__main__":
     app = create_app()
-    ip_address = get_ip_address()
-    print(f"Server running on {ip_address}:5000")
-    app.run(host=ip_address, port=5000)
+    app.run(host=ip_address, port=80) # Change ip_address to the IP address of your Raspberry Pi
